@@ -117,15 +117,29 @@ publishing](https://docs.npmjs.com/trusted-publishers) — no `NPM_TOKEN`, the r
 workflow's OIDC identity — then cuts the matching GitHub release. A push that does not change the
 version is a no-op.
 
-The extension is still published by hand, because the Marketplace needs a PAT that OIDC cannot
-replace:
+The same run then publishes the extension, once the npm version is servable — it depends on the
+package by exact version. The Marketplace has no OIDC equivalent, so that half authenticates with a
+PAT stored as the `VSCE_PAT` repository secret, and is skipped entirely while the secret is unset.
+
+To publish the extension by hand instead:
 
 ```bash
 npm --prefix vscode install
 npm --prefix vscode run publish
 ```
 
-Publish the npm package first: the extension depends on it by exact version.
+### First release
+
+`npm trust` configures a publisher *for an existing package*, so the very first `@elea.health/lat-lsp`
+has to go out by hand before the workflow can take over:
+
+```bash
+npm publish --provenance --access public
+npm trust github @elea.health/lat-lsp --repo elea-ai/lat-lsp --file publish.yml --allow-publish
+```
+
+`repository.url` in `package.json` has to match the GitHub repository exactly, or the OIDC exchange
+fails at publish time — the trust configuration itself is not validated when saved.
 
 ## License
 

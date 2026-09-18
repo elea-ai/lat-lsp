@@ -59,6 +59,45 @@ jobs:
         if: steps.version.outputs.changed == 'true'
         run: npm publish --provenance --access public
 
+      # The Marketplace has no OIDC equivalent, so this half stays on a PAT and
+      # is skipped until one is stored as the VSCE_PAT repository secret.
+      - name: Check Marketplace credentials
+        id: vsce
+        if: steps.version.outputs.changed == 'true'
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        run: |
+          if [ -n "$VSCE_PAT" ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "VSCE_PAT is not set — skipping the Marketplace publish"
+          fi
+
+      - name: Wait for the npm version to be servable
+        if: steps.vsce.outputs.configured == 'true'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          for attempt in $(seq 1 20); do
+            if npm view "@elea.health/lat-lsp@${VERSION}" version >/dev/null 2>&1; then
+              echo "@elea.health/lat-lsp@${VERSION} is on the registry"
+              exit 0
+            fi
+            echo "waiting for @elea.health/lat-lsp@${VERSION} (attempt ${attempt}/20)"
+            sleep 15
+          done
+          echo "@elea.health/lat-lsp@${VERSION} never appeared on the registry" >&2
+          exit 1
+
+      - name: Publish the extension to the Marketplace
+        if: steps.vsce.outputs.configured == 'true'
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        run: |
+          npm --prefix vscode install
+          npm --prefix vscode run publish
+
       - name: Create GitHub Release
         if: steps.version.outputs.changed == 'true'
         env:
