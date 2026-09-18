@@ -17,14 +17,14 @@ npm install -g @elea.health/lat-lsp
 
 ### VS Code
 
-The extension is published to [Open VSX](https://open-vsx.org/extension/elea.health/lat-lsp) as
-`elea.health.lat-lsp`, and bundles the server — no separate install, no configuration.
+The extension is published to [Open VSX](https://open-vsx.org/extension/elea-health/lat-lsp) as
+`elea-health.lat-lsp`, and bundles the server — no separate install, no configuration.
 
 Editors that use Open VSX as their registry — VSCodium, Cursor, Windsurf, Gitpod, Theia — install it
 from the Extensions view, and pick it up from a workspace recommendation:
 
 ```json
-{ "recommendations": ["elea.health.lat-lsp"] }
+{ "recommendations": ["elea-health.lat-lsp"] }
 ```
 
 Stock VS Code only queries Microsoft's Marketplace, where this extension is deliberately not
@@ -156,7 +156,7 @@ The Open VSX namespace has to be registered once, from a token generated in your
 settings. Creating it does not make you a verified owner; that is a separate claim.
 
 ```bash
-npx ovsx create-namespace elea.health -p <token>
+npx ovsx create-namespace elea-health -p <token>
 ```
 
 ## License
