@@ -1,0 +1,15 @@
+{
+  "name": "lat-lsp",
+  "description": "The lat.md language server, as a Claude Code plugin",
+  "owner": {
+    "name": "Elea"
+  },
+  "plugins": [
+    {
+      "name": "lat-lsp",
+      "source": "./claude",
+      "category": "development",
+      "description": "lat.md language server: jump to and list [[refs]] and @lat: annotations"
+    }
+  ]
+}

@@ -34,6 +34,37 @@ published. Install the `.vsix` from Open VSX by hand instead:
 code --install-extension lat-lsp-<version>.vsix
 ```
 
+### Claude Code
+
+`claude/` is a Claude Code plugin that declares the server, and the repository doubles as the
+marketplace that carries it:
+
+```bash
+claude plugin marketplace add elea-ai/lat-lsp
+claude plugin install lat-lsp@lat-lsp
+```
+
+Or, to enable it for everyone working in a repository, commit it to `.claude/settings.json`:
+
+```json
+{
+  "enabledPlugins": { "lat-lsp@lat-lsp": true },
+  "extraKnownMarketplaces": {
+    "lat-lsp": { "source": { "source": "github", "repo": "elea-ai/lat-lsp" } }
+  }
+}
+```
+
+The plugin declares the command as the bare `lat-lsp` binary, so the global install above — or
+whatever puts it on `PATH` — is still what supplies the server; only the wiring comes from here.
+
+Claude Code starts at most one language server per file extension: when several enabled plugins
+declare the same extension, the first registered wins and the rest never start. So
+`extensionToLanguage` maps `.md` and the source extensions that carry annotations, but deliberately
+not `.py` — that one is almost always claimed by a real Python language server, and an `@lat:`
+annotation in a Python file is still listed by find-references from the section it points at.
+Surrender any other extension the same way when a real language server for it is added.
+
 ### Neovim
 
 `nvim/lat-lsp.lua` registers the server with `vim.lsp.config` (Neovim 0.11+) and locates the server
@@ -116,14 +147,17 @@ rather than this repo's own docs, so the expectations do not move when documenta
 
 ## Releasing
 
-The npm package and the VS Code extension are versioned together.
+The npm package, the VS Code extension and the Claude Code plugin are versioned together.
 
-Bump `version` in `package.json` and `vscode/package.json`, then merge to `main`. The **Publish**
-workflow notices the change, runs the typecheck and the suite, and publishes
-`@elea.health/lat-lsp` with `--provenance` through npm [trusted
+Bump `version` in `package.json`, `vscode/package.json` and `claude/.claude-plugin/plugin.json`,
+then merge to `main`. The **Publish** workflow notices the change, runs the typecheck and the suite,
+and publishes `@elea.health/lat-lsp` with `--provenance` through npm [trusted
 publishing](https://docs.npmjs.com/trusted-publishers) — no `NPM_TOKEN`, the registry verifies the
 workflow's OIDC identity — then cuts the matching GitHub release. A push that does not change the
 version is a no-op.
+
+The Claude Code plugin has no publish step of its own: a marketplace added from GitHub reads `main`,
+so the bump is only there to keep the three manifests telling the same story.
 
 The same run then publishes the extension to Open VSX, once the npm version is servable — it depends
 on the package by exact version. Open VSX has no OIDC equivalent, so that half authenticates with an

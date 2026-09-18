@@ -1,0 +1,39 @@
+{
+  "name": "lat-lsp",
+  "description": "lat.md language server: go-to-definition and find-references for [[refs]] and @lat: annotations",
+  "version": "0.1.1",
+  "author": { "name": "Elea" },
+  "homepage": "https://github.com/elea-ai/lat-lsp#readme",
+  "repository": "https://github.com/elea-ai/lat-lsp",
+  "license": "MIT",
+  "lspServers": {
+    "lat": {
+      "command": "lat-lsp",
+      "args": ["--stdio"],
+      "extensionToLanguage": {
+        ".md": "markdown",
+        ".ts": "typescript",
+        ".tsx": "typescriptreact",
+        ".js": "javascript",
+        ".jsx": "javascriptreact",
+        ".mjs": "javascript",
+        ".cjs": "javascript",
+        ".astro": "astro",
+        ".dart": "dart",
+        ".go": "go",
+        ".rs": "rust",
+        ".lua": "lua",
+        ".sh": "shellscript",
+        ".bash": "shellscript",
+        ".sql": "sql",
+        ".tf": "terraform",
+        ".tfvars": "terraform",
+        ".hcl": "terraform",
+        ".tpl": "terraform",
+        ".toml": "toml",
+        ".yaml": "yaml",
+        ".yml": "yaml"
+      }
+    }
+  }
+}
