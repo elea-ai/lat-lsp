@@ -59,23 +59,35 @@ jobs:
         if: steps.version.outputs.changed == 'true'
         run: npm publish --provenance --access public
 
-      # The Marketplace has no OIDC equivalent, so this half stays on a PAT and
-      # is skipped until one is stored as the VSCE_PAT repository secret.
-      - name: Check Marketplace credentials
-        id: vsce
+      # Before the Marketplace, not after: the npm publish above is the point of
+      # no return, so the release that records it must not be gated on the half
+      # that can fail for an expired PAT.
+      - name: Create GitHub Release
         if: steps.version.outputs.changed == 'true'
         env:
-          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+          GH_TOKEN: ${{ github.token }}
         run: |
-          if [ -n "$VSCE_PAT" ]; then
+          gh release create "v${{ steps.version.outputs.version }}" \
+            --title "v${{ steps.version.outputs.version }}" \
+            --generate-notes
+
+      # Open VSX has no OIDC equivalent, so this half stays on a PAT and is
+      # skipped until one is stored as the OVSX_PAT repository secret.
+      - name: Check Open VSX credentials
+        id: ovsx
+        if: steps.version.outputs.changed == 'true'
+        env:
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
+        run: |
+          if [ -n "$OVSX_PAT" ]; then
             echo "configured=true" >> "$GITHUB_OUTPUT"
           else
             echo "configured=false" >> "$GITHUB_OUTPUT"
-            echo "VSCE_PAT is not set — skipping the Marketplace publish"
+            echo "OVSX_PAT is not set — skipping the Open VSX publish"
           fi
 
       - name: Wait for the npm version to be servable
-        if: steps.vsce.outputs.configured == 'true'
+        if: steps.ovsx.outputs.configured == 'true'
         env:
           VERSION: ${{ steps.version.outputs.version }}
         run: |
@@ -90,19 +102,10 @@ jobs:
           echo "@elea.health/lat-lsp@${VERSION} never appeared on the registry" >&2
           exit 1
 
-      - name: Publish the extension to the Marketplace
-        if: steps.vsce.outputs.configured == 'true'
+      - name: Publish the extension to Open VSX
+        if: steps.ovsx.outputs.configured == 'true'
         env:
-          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
         run: |
           npm --prefix vscode install
           npm --prefix vscode run publish
-
-      - name: Create GitHub Release
-        if: steps.version.outputs.changed == 'true'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh release create "v${{ steps.version.outputs.version }}" \
-            --title "v${{ steps.version.outputs.version }}" \
-            --generate-notes

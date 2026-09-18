@@ -17,13 +17,21 @@ npm install -g @elea.health/lat-lsp
 
 ### VS Code
 
-Install the **lat.md** extension (`elea-health.lat-lsp`) from the Marketplace. It bundles the server
-— no separate install, no configuration.
+The extension is published to [Open VSX](https://open-vsx.org/extension/elea-health/lat-lsp) as
+`elea-health.lat-lsp`, and bundles the server — no separate install, no configuration.
 
-To recommend it to everyone working in a repository, add it to `.vscode/extensions.json`:
+Editors that use Open VSX as their registry — VSCodium, Cursor, Windsurf, Gitpod, Theia — install it
+from the Extensions view, and pick it up from a workspace recommendation:
 
 ```json
 { "recommendations": ["elea-health.lat-lsp"] }
+```
+
+Stock VS Code only queries Microsoft's Marketplace, where this extension is deliberately not
+published. Install the `.vsix` from Open VSX by hand instead:
+
+```bash
+code --install-extension lat-lsp-<version>.vsix
 ```
 
 ### Neovim
@@ -117,9 +125,10 @@ publishing](https://docs.npmjs.com/trusted-publishers) — no `NPM_TOKEN`, the r
 workflow's OIDC identity — then cuts the matching GitHub release. A push that does not change the
 version is a no-op.
 
-The same run then publishes the extension, once the npm version is servable — it depends on the
-package by exact version. The Marketplace has no OIDC equivalent, so that half authenticates with a
-PAT stored as the `VSCE_PAT` repository secret, and is skipped entirely while the secret is unset.
+The same run then publishes the extension to Open VSX, once the npm version is servable — it depends
+on the package by exact version. Open VSX has no OIDC equivalent, so that half authenticates with an
+access token stored as the `OVSX_PAT` repository secret, and is skipped entirely while the secret is
+unset. `ovsx publish` packages from source; there is no separate `.vsix` build step.
 
 To publish the extension by hand instead:
 
@@ -130,8 +139,10 @@ npm --prefix vscode run publish
 
 ### First release
 
-`npm trust` configures a publisher *for an existing package*, so the very first `@elea.health/lat-lsp`
-has to go out by hand before the workflow can take over:
+Two things exist only after a manual first step.
+
+`npm trust` configures a publisher *for an existing package*, so the first `@elea.health/lat-lsp`
+goes out by hand:
 
 ```bash
 npm publish --provenance --access public
@@ -140,6 +151,13 @@ npm trust github @elea.health/lat-lsp --repo elea-ai/lat-lsp --file publish.yml 
 
 `repository.url` in `package.json` has to match the GitHub repository exactly, or the OIDC exchange
 fails at publish time — the trust configuration itself is not validated when saved.
+
+The Open VSX namespace has to be registered once, from a token generated in your open-vsx.org user
+settings. Creating it does not make you a verified owner; that is a separate claim.
+
+```bash
+npx ovsx create-namespace elea-health -p <token>
+```
 
 ## License
 

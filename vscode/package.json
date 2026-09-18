@@ -45,8 +45,7 @@
     }
   },
   "scripts": {
-    "package": "vsce package",
-    "publish": "vsce publish",
+    "publish": "ovsx publish",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -55,7 +54,7 @@
   },
   "devDependencies": {
     "@types/vscode": "1.91.0",
-    "@vscode/vsce": "3.6.0",
+    "ovsx": "0.10.6",
     "typescript": "7.0.2"
   }
 }
