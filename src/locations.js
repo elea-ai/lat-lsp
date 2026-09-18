@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 
 /**
  * Purpose: turn a resolved ref into the LSP `Location`s a client jumps to —
@@ -13,8 +13,8 @@
  *   await definitionLocations(index, 'src/widget.ts#createWidget');
  */
 
-const { existsSync, statSync } = require('node:fs');
-const { readFile } = require('node:fs/promises');
+const { existsSync, realpathSync, statSync } = require("node:fs");
+const { readFile } = require("node:fs/promises");
 const {
   extname,
   isAbsolute,
@@ -22,18 +22,18 @@ const {
   relative,
   resolve,
   sep,
-} = require('node:path');
-const { pathToFileURL } = require('node:url');
+} = require("node:path");
+const { pathToFileURL } = require("node:url");
 
-const { wikiLinkColumn } = require('./wiki_links.js');
+const { wikiLinkColumn } = require("./wiki_links.js");
 
 const directoryEntryFiles = [
-  'README.md',
-  'package.json',
-  'pubspec.yaml',
-  'index.ts',
-  'main.tf',
-  'terragrunt.hcl',
+  "README.md",
+  "package.json",
+  "pubspec.yaml",
+  "index.ts",
+  "main.tf",
+  "terragrunt.hcl",
 ];
 
 /** @param {{ character?: number, endCharacter?: number | null, file: string, line: number }} target */
@@ -60,23 +60,34 @@ function sectionLocation(index, section) {
 
 function resolveWithinRoot(projectRoot, filePart) {
   const absolute = resolve(projectRoot, filePart);
-  const inside = relative(projectRoot, absolute);
-  if (inside === '..' || inside.startsWith(`..${sep}`) || isAbsolute(inside)) {
+  if (!existsSync(absolute)) return null;
+
+  // Canonicalise both sides before comparing: a lexical check passes an
+  // in-project symlink that points outside the root, and the reads that follow
+  // it — `statSync` here, `readFileSync` in the source parser — resolve it.
+  // The root itself can sit behind a symlink too (macOS `/tmp`).
+  let inside;
+  try {
+    inside = relative(realpathSync(projectRoot), realpathSync(absolute));
+  } catch {
+    return null;
+  }
+  if (inside === ".." || inside.startsWith(`..${sep}`) || isAbsolute(inside)) {
     return null;
   }
   return absolute;
 }
 
 function splitTarget(target) {
-  const hashIndex = target.indexOf('#');
+  const hashIndex = target.indexOf("#");
   return {
     filePart: hashIndex === -1 ? target : target.slice(0, hashIndex),
-    symbolPart: hashIndex === -1 ? '' : target.slice(hashIndex + 1),
+    symbolPart: hashIndex === -1 ? "" : target.slice(hashIndex + 1),
   };
 }
 
 function symbolMatching(symbols, symbolPart) {
-  const parts = symbolPart.split('#');
+  const parts = symbolPart.split("#");
   const name = parts[parts.length - 1];
   const parent = parts.length > 1 ? parts[parts.length - 2] : null;
   return (
@@ -100,7 +111,7 @@ async function sourceLocations(index, target) {
   const absolute = resolveWithinRoot(index.projectRoot, filePart);
   if (absolute === null || !existsSync(absolute)) return [];
   if (statSync(absolute).isDirectory()) return directoryEntryLocation(absolute);
-  if (symbolPart === '') return [locationAt({ file: absolute, line: 0 })];
+  if (symbolPart === "") return [locationAt({ file: absolute, line: 0 })];
 
   const { sourceParser } = index.lat;
   if (!sourceParser.SOURCE_EXTENSIONS.has(extname(filePart))) {
@@ -125,7 +136,7 @@ function candidateSections(index, candidate) {
   if (exact) return [exact];
 
   const { filePart, symbolPart } = splitTarget(candidate);
-  const rest = symbolPart === '' ? '' : '#' + symbolPart;
+  const rest = symbolPart === "" ? "" : "#" + symbolPart;
   return index.rootSections
     .filter((section) => section.file === filePart)
     .map((root) => index.sectionById.get((root.id + rest).toLowerCase()))
@@ -150,11 +161,11 @@ async function definitionLocations(index, target) {
 async function codeOccurrenceLocation(occurrence, lineCache) {
   let lines = lineCache.get(occurrence.file);
   if (lines === undefined) {
-    const text = await readFile(occurrence.file, 'utf-8').catch(() => '');
-    lines = text.split('\n');
+    const text = await readFile(occurrence.file, "utf-8").catch(() => "");
+    lines = text.split("\n");
     lineCache.set(occurrence.file, lines);
   }
-  const lineText = lines[occurrence.line] ?? '';
+  const lineText = lines[occurrence.line] ?? "";
   const character = wikiLinkColumn(lineText, occurrence.target);
   return locationAt({
     character,
