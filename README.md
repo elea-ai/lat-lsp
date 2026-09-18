@@ -104,14 +104,28 @@ The suite drives the real server over stdio against the fixture lattice in `test
 two-file lattice plus one annotated source file — and asserts the locations it returns. A fixture
 rather than this repo's own docs, so the expectations do not move when documentation does.
 
+`ripgrep` has to be on `PATH`: the `@lat:` sweep shells out to it.
+
 ## Releasing
 
 The npm package and the VS Code extension are versioned together.
 
+Bump `version` in `package.json` and `vscode/package.json`, then merge to `main`. The **Publish**
+workflow notices the change, runs the typecheck and the suite, and publishes
+`@elea.health/lat-lsp` with `--provenance` through npm [trusted
+publishing](https://docs.npmjs.com/trusted-publishers) — no `NPM_TOKEN`, the registry verifies the
+workflow's OIDC identity — then cuts the matching GitHub release. A push that does not change the
+version is a no-op.
+
+The extension is still published by hand, because the Marketplace needs a PAT that OIDC cannot
+replace:
+
 ```bash
-npm publish --access public          # @elea.health/lat-lsp
-npm --prefix vscode run publish      # elea-health.lat-lsp, needs a Marketplace PAT
+npm --prefix vscode install
+npm --prefix vscode run publish
 ```
+
+Publish the npm package first: the extension depends on it by exact version.
 
 ## License
 
