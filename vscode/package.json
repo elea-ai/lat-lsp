@@ -3,7 +3,7 @@
   "displayName": "lat.md",
   "description": "Go to definition and find references for lat.md [[refs]] and @lat: annotations",
   "version": "0.1.0",
-  "publisher": "elea-health",
+  "publisher": "elea.health",
   "license": "MIT",
   "homepage": "https://github.com/elea-ai/lat-lsp#readme",
   "repository": {
