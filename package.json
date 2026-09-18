@@ -1,0 +1,43 @@
+{
+  "name": "@elea.health/lat-lsp",
+  "version": "0.1.0",
+  "description": "Language server for lat.md — go to definition and find references for [[refs]] and @lat: annotations",
+  "keywords": [
+    "lat.md",
+    "language-server",
+    "lsp",
+    "knowledge-graph",
+    "documentation"
+  ],
+  "homepage": "https://github.com/elea-ai/lat-lsp#readme",
+  "bugs": "https://github.com/elea-ai/lat-lsp/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/elea-ai/lat-lsp.git"
+  },
+  "license": "MIT",
+  "bin": {
+    "lat-lsp": "bin/lat-lsp.js"
+  },
+  "files": [
+    "bin",
+    "nvim",
+    "src"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@elea.health/lat.md": "0.11.3",
+    "vscode-languageserver": "10.1.1",
+    "vscode-languageserver-textdocument": "1.0.14"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.3",
+    "typescript": "7.0.2"
+  }
+}

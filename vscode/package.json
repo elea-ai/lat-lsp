@@ -1,0 +1,61 @@
+{
+  "name": "lat-lsp",
+  "displayName": "lat.md",
+  "description": "Go to definition and find references for lat.md [[refs]] and @lat: annotations",
+  "version": "0.1.0",
+  "publisher": "elea-health",
+  "license": "MIT",
+  "homepage": "https://github.com/elea-ai/lat-lsp#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/elea-ai/lat-lsp.git",
+    "directory": "vscode"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "engines": {
+    "vscode": "^1.91.0"
+  },
+  "main": "./extension.js",
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": false,
+      "description": "The language server runs Node over the files in the workspace."
+    }
+  },
+  "contributes": {
+    "configuration": {
+      "title": "lat.md",
+      "properties": {
+        "latLsp.trace.server": {
+          "type": "string",
+          "enum": [
+            "off",
+            "messages",
+            "verbose"
+          ],
+          "default": "off",
+          "description": "Trace the communication between VS Code and the lat.md language server."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "package": "vsce package",
+    "publish": "vsce publish",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@elea.health/lat-lsp": "0.1.0",
+    "vscode-languageclient": "10.1.1"
+  },
+  "devDependencies": {
+    "@types/vscode": "1.91.0",
+    "@vscode/vsce": "3.6.0",
+    "typescript": "7.0.2"
+  }
+}
