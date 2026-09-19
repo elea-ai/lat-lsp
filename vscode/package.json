@@ -2,7 +2,7 @@
   "name": "lat-lsp",
   "displayName": "lat.md",
   "description": "Go to definition and find references for lat.md [[refs]] and @lat: annotations",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "publisher": "elea-health",
   "license": "MIT",
   "homepage": "https://github.com/elea-ai/lat-lsp#readme",
@@ -49,7 +49,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@elea.health/lat-lsp": "0.1.1",
+    "@elea.health/lat-lsp": "0.1.2",
     "vscode-languageclient": "10.1.1"
   },
   "devDependencies": {
