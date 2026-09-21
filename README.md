@@ -78,6 +78,18 @@ dofile(root .. '/@elea.health/lat-lsp/nvim/lat-lsp.lua').setup()
 `setup()` accepts `filetypes`, `node` and `server` to override the defaults. `root_markers = { 'lat.md' }`
 keeps it attached only inside a lattice project.
 
+`setup()` also registers `:LatNextRef` and `:LatPrevRef`, which walk the `[[refs]]` of the current
+buffer — including the ones inside `@lat:` annotations — wrapping at the end and taking a count. They
+scan the buffer in Lua, so they work in any file, with or without the server attached, and they set
+the `'` mark so `''` jumps back. Pass `keymaps = true` for `]l` and `[l`, or a table to choose your
+own:
+
+```lua
+dofile(root .. '/@elea.health/lat-lsp/nvim/lat-lsp.lua').setup({
+  keymaps = { next = ']r', prev = '[r' },
+})
+```
+
 ### Any other LSP client
 
 Run the server over stdio:
