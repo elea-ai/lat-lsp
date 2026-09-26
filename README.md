@@ -90,6 +90,33 @@ dofile(root .. '/@elea.health/lat-lsp/nvim/lat-lsp.lua').setup({
 })
 ```
 
+### Zed
+
+`zed/` is a Zed extension. It is not in the Zed extension registry yet, so install it from a clone:
+open the command palette, run **`zed: install dev extension`** and pick the `zed/` folder. Zed
+compiles the extension itself, which needs Rust installed through `rustup`.
+
+The extension starts the first server it finds: the `lsp.lat-lsp.binary` setting, then a `lat-lsp`
+on your `PATH`, and otherwise the matching `@elea.health/lat-lsp` version, which it installs from npm
+and runs with Zed's own Node. With no global install, there is nothing to configure.
+
+```jsonc
+// settings.json — only to point at a checkout of the server
+{
+  "lsp": {
+    "lat-lsp": {
+      "binary": { "path": "node", "arguments": ["/path/to/lat-lsp/bin/lat-lsp.js", "--stdio"] }
+    }
+  }
+}
+```
+
+In `lat.md/` files every request works, because no other server competes for them. In source
+files, Zed may send go-to-definition only to the language's primary server (TypeScript, rust-analyzer
+and so on), so jumping from a `// @lat:` annotation can come back empty while hover and
+find-references still answer. Listing `"lat-lsp"` first in that language's `language_servers` makes
+the jump work, but also routes ordinary go-to-definition to lat-lsp first.
+
 ### Any other LSP client
 
 Run the server over stdio:
@@ -135,7 +162,8 @@ so a second, weaker copy of that rule in the editor would only drift.
   find-references, so they are built on first reference query and dropped whenever the lattice
   reloads. Saving a `lat.md/` file reloads the lattice, saving anything else re-scans only that file,
   and a file the client reports via `workspace/didChangeWatchedFiles` (a `git switch`, a generator,
-  another editor) is re-read from disk.
+  another editor) is re-read from disk. The server registers that `**/lat.md/**/*.md` watcher itself
+  whenever the client allows dynamic registration, so no editor integration has to set one up.
 - **Lenient jumping, strict listing.** Definition and hover accept a `[[ref]]` anywhere in any file,
   while the reverse index keeps `lat`'s rule that an `@lat:` annotation counts only in a `//` or `#`
   line comment. A ref inside a block comment jumps, but it is invisible to `lat check` and therefore
@@ -159,29 +187,34 @@ rather than this repo's own docs, so the expectations do not move when documenta
 
 ## Releasing
 
-The npm package, the VS Code extension and the Claude Code plugin are versioned together.
+The npm package, the VS Code extension, the Zed extension and the Claude Code plugin are versioned
+together.
 
-Bump `version` in `package.json`, `vscode/package.json` and `claude/.claude-plugin/plugin.json`,
-then merge to `main`. The **Publish** workflow notices the change, runs the typecheck and the suite,
-and publishes `@elea.health/lat-lsp` with `--provenance` through npm [trusted
-publishing](https://docs.npmjs.com/trusted-publishers) — no `NPM_TOKEN`, the registry verifies the
-workflow's OIDC identity — then cuts the matching GitHub release. A push that does not change the
-version is a no-op.
+Bump `version` in `package.json`, `vscode/package.json`, `claude/.claude-plugin/plugin.json`,
+`zed/extension.toml` and `zed/Cargo.toml`, then merge to `main`. The **Publish** workflow notices
+the change, runs the typecheck and the suite, and publishes `@elea.health/lat-lsp` with
+`--provenance` through npm [trusted publishing](https://docs.npmjs.com/trusted-publishers) — no
+`NPM_TOKEN`, the registry verifies the workflow's OIDC identity — then cuts the matching GitHub
+release. A push that does not change the version is a no-op.
 
 The Claude Code plugin has no publish step of its own: a marketplace added from GitHub reads `main`,
-so the bump is only there to keep the three manifests telling the same story.
+so the bump is only there to keep the manifests telling the same story.
 
-The same run then publishes the extension to Open VSX, once the npm version is servable — it depends
-on the package by exact version. Open VSX has no OIDC equivalent, so that half authenticates with an
-access token stored as the `OVSX_PAT` repository secret, and is skipped entirely while the secret is
-unset. `ovsx publish` packages from source; there is no separate `.vsix` build step.
+The same run then publishes the VS Code extension to Open VSX, once the npm version is servable —
+it depends on the package by exact version. Open VSX has no OIDC equivalent, so that half
+authenticates with an access token stored as the `OVSX_PAT` repository secret, and is skipped
+entirely while the secret is unset. `ovsx publish` packages from source; there is no separate `.vsix` build step.
 
-To publish the extension by hand instead:
+To publish the VS Code extension by hand instead:
 
 ```bash
 npm --prefix vscode install
 npm --prefix vscode run publish
 ```
+
+The Zed extension has no publish step yet: it is installed from a clone (see [Zed](#zed)). It
+installs exactly the server version in `zed/Cargo.toml`, so CI fails while either Zed manifest
+disagrees with `package.json`.
 
 ### First release
 

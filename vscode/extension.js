@@ -2,8 +2,8 @@
 
 /**
  * Purpose: the VS Code extension entry point. Starts the `@elea.health/lat-lsp`
- * server over IPC for every file in the workspace and watches `lat.md/` for
- * changes made outside the editor.
+ * server over IPC for every file in the workspace. The server registers its own
+ * `lat.md/` file watcher, so changes made outside the editor reach it.
  *
  * Usage: activated by VS Code, never called directly. The server is resolved
  *   from the bundled `@elea.health/lat-lsp` dependency, so the extension needs
@@ -13,7 +13,6 @@
  *   code --install-extension elea-health.lat-lsp
  */
 
-const { workspace } = require('vscode');
 const { LanguageClient, TransportKind } = require('vscode-languageclient/node');
 
 /** @type {LanguageClient | null} */
@@ -31,9 +30,6 @@ function activate(context) {
   };
   const clientOptions = {
     documentSelector: [{ scheme: 'file' }],
-    synchronize: {
-      fileEvents: workspace.createFileSystemWatcher('**/lat.md/**/*.md'),
-    },
   };
   client = new LanguageClient(
     'latLsp',

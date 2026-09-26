@@ -18,6 +18,7 @@ const { fileURLToPath } = require('node:url');
 
 const {
   createConnection,
+  DidChangeWatchedFilesNotification,
   ProposedFeatures,
   TextDocuments,
   TextDocumentSyncKind,
@@ -33,6 +34,7 @@ const { documentSymbols, workspaceSymbols } = require('./symbols.js');
 const { linkAtPosition, scanWikiLinks } = require('./wiki_links.js');
 
 const latticeReloadDelayMs = 250;
+const latticeWatchPattern = '**/lat.md/**/*.md';
 const transportFlags = ['--stdio', '--node-ipc', '--socket'];
 
 if (!process.argv.some((argument) => transportFlags.includes(argument))) {
@@ -48,6 +50,7 @@ let index = null;
 let indexReady = null;
 /** @type {NodeJS.Timeout | null} */
 let latticeReloadTimer = null;
+let clientRegistersWatchers = false;
 /** @type {Map<string, number>} */
 const bufferSyncedAt = new Map();
 /** @type {Map<string, number>} */
@@ -156,6 +159,9 @@ async function reindexWrittenFile(store, { file, text }) {
 
 connection.onInitialize(async (params) => {
   const root = workspaceRoot(params);
+  clientRegistersWatchers =
+    params.capabilities.workspace?.didChangeWatchedFiles
+      ?.dynamicRegistration === true;
   try {
     const { lattice } = await loadLatModules();
     const latDir = lattice.findLatticeDir(root);
@@ -195,6 +201,22 @@ connection.onInitialize(async (params) => {
       workspaceSymbolProvider: true,
     },
   };
+});
+
+// Clients that watch nothing on their own behalf (Zed, Neovim) learn about
+// lattice edits made outside the editor — a `git switch`, a generator — only
+// once the server asks for them.
+connection.onInitialized(() => {
+  if (!clientRegistersWatchers || index === null) return;
+  connection.client
+    .register(DidChangeWatchedFilesNotification.type, {
+      watchers: [{ globPattern: latticeWatchPattern }],
+    })
+    .catch((error) =>
+      connection.console.error(
+        `lat-lsp: cannot register the lattice watcher: ${String(error)}`,
+      ),
+    );
 });
 
 connection.onDefinition(async (params) => {
