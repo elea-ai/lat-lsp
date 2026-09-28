@@ -67,6 +67,40 @@ describe('lat.md language server', () => {
     assert.equal(result.capabilities.hoverProvider, true);
   });
 
+  test('registers a lattice watcher when the client supports it', async () => {
+    const other = new TestClient(fixtureRoot);
+    await other.initialize({
+      workspace: { didChangeWatchedFiles: { dynamicRegistration: true } },
+    });
+    await other.request('workspace/symbol', { query: '' });
+    await other.stop();
+
+    const registrations = other.serverRequests
+      .filter((request) => request.method === 'client/registerCapability')
+      .flatMap((request) => request.params.registrations);
+    assert.deepEqual(
+      registrations.map((registration) => [
+        registration.method,
+        registration.registerOptions,
+      ]),
+      [
+        [
+          'workspace/didChangeWatchedFiles',
+          { watchers: [{ globPattern: '**/lat.md/**/*.md' }] },
+        ],
+      ],
+    );
+  });
+
+  test('registers nothing for a client without dynamic registration', async () => {
+    const other = new TestClient(fixtureRoot);
+    await other.initialize();
+    await other.request('workspace/symbol', { query: '' });
+    await other.stop();
+
+    assert.deepEqual(other.serverRequests, []);
+  });
+
   describe('go to definition', () => {
     test('jumps from a wiki link to the section heading', async () => {
       const locations = await definition(

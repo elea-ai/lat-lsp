@@ -7,7 +7,8 @@
  *
  * Usage: `new TestClient(projectRoot)`, `await client.initialize()`, then
  *   `client.request(method, params)` / `client.notify(method, params)`, and
- *   `await client.stop()`. `describeLocation` renders a Location as
+ *   `await client.stop()`. Requests the server sends are answered with `null`
+ *   and kept in `serverRequests`. `describeLocation` renders a Location as
  *   `relative/path.ts:line` for readable assertions.
  *
  * Example:
@@ -34,6 +35,7 @@ class TestClient {
     this.nextId = 1;
     this.pending = new Map();
     this.projectRoot = projectRoot;
+    this.serverRequests = [];
     this.child.stdout.on('data', (chunk) => this.consume(chunk));
   }
 
@@ -54,6 +56,11 @@ class TestClient {
   }
 
   dispatch(body) {
+    if (body.method !== undefined && body.id !== undefined) {
+      this.serverRequests.push(body);
+      this.send({ id: body.id, jsonrpc: '2.0', result: null });
+      return;
+    }
     if (body.id !== undefined && this.pending.has(body.id)) {
       const resolve = this.pending.get(body.id);
       this.pending.delete(body.id);
@@ -87,10 +94,10 @@ class TestClient {
     return pathToFileURL(join(this.projectRoot, relativePath)).toString();
   }
 
-  async initialize() {
+  async initialize(capabilities = {}) {
     const rootUri = pathToFileURL(this.projectRoot).toString();
     const result = await this.request('initialize', {
-      capabilities: {},
+      capabilities,
       processId: process.pid,
       rootUri,
       workspaceFolders: [{ name: 'fixture', uri: rootUri }],

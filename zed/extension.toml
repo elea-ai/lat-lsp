@@ -1,0 +1,31 @@
+id = "lat-lsp"
+name = "lat.md"
+description = "Go to definition and find references for lat.md [[refs]] and @lat: annotations"
+version = "0.1.3"
+schema_version = 1
+authors = ["Elea"]
+repository = "https://github.com/elea-ai/lat-lsp"
+
+# Languages Zed does not ship (Lua, Dart, TOML, SQL, Terraform, Astro) come from
+# their own extensions; the server simply never starts for one that is missing.
+[language_servers.lat-lsp]
+name = "lat.md Language Server"
+languages = [
+  "Astro",
+  "Dart",
+  "Go",
+  "HCL",
+  "JavaScript",
+  "Lua",
+  "Markdown",
+  "Python",
+  "Rust",
+  "SQL",
+  "Shell Script",
+  "TOML",
+  "TSX",
+  "Terraform",
+  "Terraform Vars",
+  "TypeScript",
+  "YAML",
+]

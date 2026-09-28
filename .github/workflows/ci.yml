@@ -20,3 +20,28 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm test
+
+  zed:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: zed
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check the Zed manifests match package.json
+        working-directory: .
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          for manifest in zed/extension.toml zed/Cargo.toml; do
+            if ! grep -qx "version = \"$VERSION\"" "$manifest"; then
+              echo "$manifest does not declare version $VERSION" >&2
+              exit 1
+            fi
+          done
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-wasip2
+          components: clippy, rustfmt
+      - run: cargo fmt --check
+      - run: cargo clippy --release --target wasm32-wasip2 -- -D warnings
+      - run: cargo build --release --target wasm32-wasip2
