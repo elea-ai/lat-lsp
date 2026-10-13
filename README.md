@@ -1,11 +1,11 @@
 # lat.md Language Server
 
-An LSP server that makes [`lat.md`](https://github.com/elea-ai/lat.md) refs navigable from the
+An LSP server that makes [`lat.md`](https://github.com/vercel-labs/lat.md) refs navigable from the
 editor: jump from a `[[ref]]` or a `// @lat:` annotation to the section or symbol it names, and list
 everything that references a section — markdown wiki links and `@lat:` code annotations alike.
 
 It is the editor half of the CLI: `lat locate`, `lat section` and `lat refs` without leaving the
-buffer. Resolution is not reimplemented — the server imports `@elea.health/lat.md` internals
+buffer. Resolution is not reimplemented — the server imports `@lat.md/core` internals
 (`loadAllSections`, `resolveRef`, `scanCodeRefs`, `resolveSourceSymbol`), so a ref that jumps in the
 editor is a ref `lat check` accepts, and a ref that does not resolve fails both.
 

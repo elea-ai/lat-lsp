@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * Purpose: load the ESM internals of `@elea.health/lat.md` from this CommonJS
+ * Purpose: load the ESM internals of `@lat.md/core` from this CommonJS
  * package exactly once, so ref resolution here matches what `lat check` enforces.
  *
  * Usage: `await loadLatModules()` — the dynamic imports are shared across every
@@ -14,9 +14,10 @@
 
 /**
  * @typedef {{
- *   codeRefs: typeof import('@elea.health/lat.md/dist/src/code-refs.js'),
- *   lattice: typeof import('@elea.health/lat.md/dist/src/lattice.js'),
- *   sourceParser: typeof import('@elea.health/lat.md/dist/src/source-parser.js'),
+ *   codeRefs: typeof import('@lat.md/core/code-refs'),
+ *   lattice: typeof import('@lat.md/core/lattice'),
+ *   sourceFormats: typeof import('@lat.md/core/source-formats'),
+ *   sourceParser: typeof import('@lat.md/core/source-parser'),
  * }} LatModules
  */
 
@@ -24,12 +25,13 @@
 let loading = null;
 
 async function importLatModules() {
-  const [codeRefs, lattice, sourceParser] = await Promise.all([
-    import('@elea.health/lat.md/dist/src/code-refs.js'),
-    import('@elea.health/lat.md/dist/src/lattice.js'),
-    import('@elea.health/lat.md/dist/src/source-parser.js'),
+  const [codeRefs, lattice, sourceFormats, sourceParser] = await Promise.all([
+    import('@lat.md/core/code-refs'),
+    import('@lat.md/core/lattice'),
+    import('@lat.md/core/source-formats'),
+    import('@lat.md/core/source-parser'),
   ]);
-  return { codeRefs, lattice, sourceParser };
+  return { codeRefs, lattice, sourceFormats, sourceParser };
 }
 
 function loadLatModules() {
