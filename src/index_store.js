@@ -45,6 +45,7 @@ class LatticeIndex {
     this.sectionById = new Map();
     this.sectionIds = new Set();
     this.sections = [];
+    this.slugIndex = new Map();
   }
 
   async build() {
@@ -81,6 +82,7 @@ class LatticeIndex {
     );
     this.sectionIds = new Set(this.sectionById.keys());
     this.fileIndex = lattice.buildFileIndex(this.rootSections);
+    this.slugIndex = lattice.buildSectionSlugIndex(this.rootSections);
     this.dropOccurrences();
   }
 
@@ -160,7 +162,12 @@ class LatticeIndex {
   }
 
   resolveTargetFull(target) {
-    return this.lat.lattice.resolveRef(target, this.sectionIds, this.fileIndex);
+    return this.lat.lattice.resolveRef(
+      target,
+      this.sectionIds,
+      this.fileIndex,
+      this.slugIndex,
+    );
   }
 
   sectionForTarget(target) {

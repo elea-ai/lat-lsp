@@ -326,6 +326,17 @@ describe('lat.md language server', () => {
       );
     });
 
+    test('names a heading made only of inline code after its code text', async () => {
+      const symbols = await client.request('textDocument/documentSymbol', {
+        textDocument: { uri: client.uriFor('lat.md/notes.md') },
+      });
+
+      assert.deepEqual(
+        symbols[0].children.map((child) => child.name),
+        ['Refs', 'Directories', 'Dangling', 'renderFrame'],
+      );
+    });
+
     test('returns no document symbols for a source file', async () => {
       const symbols = await client.request('textDocument/documentSymbol', {
         textDocument: { uri: client.uriFor('src/widget.ts') },

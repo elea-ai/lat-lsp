@@ -113,8 +113,8 @@ async function sourceLocations(index, target) {
   if (statSync(absolute).isDirectory()) return directoryEntryLocation(absolute);
   if (symbolPart === "") return [locationAt({ file: absolute, line: 0 })];
 
-  const { sourceParser } = index.lat;
-  if (!sourceParser.SOURCE_EXTENSIONS.has(extname(filePart))) {
+  const { sourceFormats, sourceParser } = index.lat;
+  if (!sourceFormats.isSourceFileExtension(extname(filePart))) {
     return [locationAt({ file: absolute, line: 0 })];
   }
   const { found, symbols } = await sourceParser.resolveSourceSymbol(

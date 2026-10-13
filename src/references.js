@@ -59,8 +59,8 @@ function referencesForTarget(index, target) {
 
 async function enclosingSourceQuery(index, { file, line, text }) {
   const relativePath = index.relativeTo(file);
-  const { sourceParser } = index.lat;
-  if (!sourceParser.SOURCE_EXTENSIONS.has(extname(relativePath))) {
+  const { sourceFormats, sourceParser } = index.lat;
+  if (!sourceFormats.isSourceFileExtension(extname(relativePath))) {
     return relativePath;
   }
   const symbols = await sourceParser.parseSourceSymbols(relativePath, text);

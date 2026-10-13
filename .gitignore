@@ -2,3 +2,4 @@ node_modules
 *.vsix
 zed/target
 zed/extension.wasm
+test/fixture/lat.md/.cache

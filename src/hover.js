@@ -39,8 +39,8 @@ async function sourceHover(index, target) {
   if (absolute === null || !existsSync(absolute)) return null;
   if (symbolPart === '') return '`' + filePart + '`';
 
-  const { sourceParser } = index.lat;
-  if (!sourceParser.SOURCE_EXTENSIONS.has(extname(filePart))) {
+  const { sourceFormats, sourceParser } = index.lat;
+  if (!sourceFormats.isSourceFileExtension(extname(filePart))) {
     return '`' + target + '`';
   }
   const { found, symbols } = await sourceParser.resolveSourceSymbol(
