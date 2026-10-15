@@ -10,6 +10,8 @@ A mixed-case ref to [[Widget#Rendering]].
 
 The panel method is [[src/widget.ts#Panel#render]] and the standalone one is [[src/widget.ts#render]].
 
+The regional reset page is [[src/pages/[region]/reset-password.astro]].
+
 ## Directories
 
 The [[tool]] directory has an entry file; the [[src]] directory has none.

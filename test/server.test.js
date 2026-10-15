@@ -171,6 +171,16 @@ describe('lat.md language server', () => {
       assert.deepEqual(places(standalone), ['src/widget.ts:7']);
     });
 
+    test('opens a file under a dynamic route directory', async () => {
+      const locations = await definition(
+        at('lat.md/notes.md', '[[src/pages/[region]/reset-password.astro]]'),
+      );
+
+      assert.deepEqual(places(locations), [
+        'src/pages/[region]/reset-password.astro:1',
+      ]);
+    });
+
     test('opens the entry file of a directory ref', async () => {
       const locations = await definition(at('lat.md/notes.md', '[[tool]]'));
 
@@ -197,6 +207,84 @@ describe('lat.md language server', () => {
       );
 
       assert.equal(locations, null);
+    });
+  });
+
+  describe('go to definition with link support', () => {
+    let linkClient;
+
+    before(async () => {
+      linkClient = new TestClient(fixtureRoot);
+      await linkClient.initialize({
+        textDocument: { definition: { linkSupport: true } },
+      });
+    });
+
+    after(async () => {
+      await linkClient.stop();
+    });
+
+    // The span of `needle` on its line, as an LSP range with an exclusive end.
+    const spanOf = (relativePath, needle) => {
+      const start = linkClient.positionOf(relativePath, needle, 0);
+      return {
+        end: { character: start.character + needle.length, line: start.line },
+        start,
+      };
+    };
+
+    const linkAt = (relativePath, needle, offset) =>
+      linkClient.request('textDocument/definition', {
+        position: linkClient.positionOf(relativePath, needle, offset),
+        textDocument: { uri: linkClient.uriFor(relativePath) },
+      });
+
+    test('spans the whole wiki link with the origin range', async () => {
+      const links = await linkAt('lat.md/guide.md', '[[widget#Rendering]]');
+
+      assert.equal(links.length, 1);
+      assert.deepEqual(
+        links[0].originSelectionRange,
+        spanOf('lat.md/guide.md', '[[widget#Rendering]]'),
+      );
+      assert.equal(links[0].targetUri, linkClient.uriFor('lat.md/widget.md'));
+      assert.equal(links[0].targetSelectionRange.start.line, 4);
+    });
+
+    test('spans every segment of a multi-segment path ref', async () => {
+      const needle = '[[src/widget.ts#Panel#render]]';
+      const links = await linkAt('lat.md/notes.md', needle, 18);
+
+      assert.deepEqual(
+        links[0].originSelectionRange,
+        spanOf('lat.md/notes.md', needle),
+      );
+      assert.equal(links[0].targetUri, linkClient.uriFor('src/widget.ts'));
+      assert.equal(links[0].targetRange.start.line, 11);
+    });
+
+    test('spans a ref with a dynamic route segment', async () => {
+      const needle = '[[src/pages/[region]/reset-password.astro]]';
+      const links = await linkAt('lat.md/notes.md', needle, 14);
+
+      assert.deepEqual(
+        links[0].originSelectionRange,
+        spanOf('lat.md/notes.md', needle),
+      );
+      assert.equal(
+        links[0].targetUri,
+        linkClient.uriFor('src/pages/[region]/reset-password.astro'),
+      );
+    });
+
+    test('spans the link of an @lat code annotation', async () => {
+      const links = await linkAt('src/widget.ts', '[[widget#Rendering]]');
+
+      assert.deepEqual(
+        links[0].originSelectionRange,
+        spanOf('src/widget.ts', '[[widget#Rendering]]'),
+      );
+      assert.equal(links[0].targetUri, linkClient.uriFor('lat.md/widget.md'));
     });
   });
 

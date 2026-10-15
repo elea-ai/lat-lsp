@@ -9,7 +9,7 @@
  *   `client.request(method, params)` / `client.notify(method, params)`, and
  *   `await client.stop()`. Requests the server sends are answered with `null`
  *   and kept in `serverRequests`. `describeLocation` renders a Location as
- *   `relative/path.ts:line` for readable assertions.
+ *   `relative/path.ts:line`, percent-decoded, for readable assertions.
  *
  * Example:
  *   const client = new TestClient(workspace);
@@ -138,7 +138,8 @@ class TestClient {
 
 function describeLocation(client, location) {
   const prefix = pathToFileURL(client.projectRoot).toString() + '/';
-  return `${location.uri.replace(prefix, '')}:${location.range.start.line + 1}`;
+  const path = decodeURIComponent(location.uri.replace(prefix, ''));
+  return `${path}:${location.range.start.line + 1}`;
 }
 
 module.exports = { TestClient, describeLocation };

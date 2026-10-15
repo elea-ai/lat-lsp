@@ -41,11 +41,49 @@ local default_keymaps = {
   prev = "[l",
 }
 
-local ref_pattern = "%[%[[^%]]-%]%]"
-
 local function bundled_server_path()
   local source = debug.getinfo(1, "S").source:sub(2)
   return vim.fs.normalize(vim.fs.dirname(source) .. "/../bin/lat-lsp.js")
+end
+
+--- Byte index of the `]]` that closes the link opening at `from`, or nil when
+--- it never closes on this line. Mirrors `closingIndex` in `src/wiki_links.js`:
+--- brackets in the target nest (dynamic route segments such as `[region]` or
+--- `[[...slug]]` belong to it), the alias after `|` does not, and only a `]]`
+--- outside every nested segment closes the link.
+local function closing_index(text, from)
+  local depth = 0
+  local in_alias = false
+  for index = from + 2, #text do
+    local char = string.sub(text, index, index)
+    if not in_alias and char == "|" then
+      in_alias = true
+    elseif not in_alias and char == "[" then
+      depth = depth + 1
+    elseif not in_alias and char == "]" and depth > 0 then
+      depth = depth - 1
+    elseif char == "]" then
+      if string.sub(text, index + 1, index + 1) == "]" then
+        return index
+      end
+      return nil
+    end
+  end
+  return nil
+end
+
+--- The target of a link's inner text with the alias dropped, or nil when the
+--- target or the alias is only whitespace.
+local function link_target(data)
+  local pipe = string.find(data, "|", 1, true)
+  local target = vim.trim(pipe and string.sub(data, 1, pipe - 1) or data)
+  if target == "" then
+    return nil
+  end
+  if pipe and vim.trim(string.sub(data, pipe + 1)) == "" then
+    return nil
+  end
+  return target
 end
 
 --- Every `[[target]]` in a buffer, in document order, as
@@ -55,14 +93,17 @@ function M.refs(buffer)
   local refs = {}
   local lines = vim.api.nvim_buf_get_lines(buffer or 0, 0, -1, false)
   for line = 1, #lines do
-    local from, to = string.find(lines[line], ref_pattern)
+    local text = lines[line]
+    local from = string.find(text, "[[", 1, true)
     while from ~= nil do
-      local raw = string.sub(lines[line], from + 2, to - 2)
-      local target = vim.trim(vim.split(raw, "|", { plain = true })[1])
-      if target ~= "" then
+      local close = closing_index(text, from)
+      local target = close and link_target(string.sub(text, from + 2, close - 1))
+      if target then
         refs[#refs + 1] = { column = from - 1, line = line, target = target }
+        from = string.find(text, "[[", close + 2, true)
+      else
+        from = string.find(text, "[[", from + 1, true)
       end
-      from, to = string.find(lines[line], ref_pattern, to + 1)
     end
   end
   return refs
