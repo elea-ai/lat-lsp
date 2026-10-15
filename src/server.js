@@ -51,6 +51,7 @@ let indexReady = null;
 /** @type {NodeJS.Timeout | null} */
 let latticeReloadTimer = null;
 let clientRegistersWatchers = false;
+let clientSupportsDefinitionLinks = false;
 /** @type {Map<string, number>} */
 const bufferSyncedAt = new Map();
 /** @type {Map<string, number>} */
@@ -162,6 +163,8 @@ connection.onInitialize(async (params) => {
   clientRegistersWatchers =
     params.capabilities.workspace?.didChangeWatchedFiles
       ?.dynamicRegistration === true;
+  clientSupportsDefinitionLinks =
+    params.capabilities.textDocument?.definition?.linkSupport === true;
   try {
     const { lattice } = await loadLatModules();
     const latDir = lattice.findLatticeDir(root);
@@ -223,7 +226,20 @@ connection.onDefinition(async (params) => {
   try {
     const context = await requestContext(params);
     if (context === null || context.link === null) return null;
-    return await definitionLocations(context.index, context.link.target);
+    const locations = await definitionLocations(
+      context.index,
+      context.link.target,
+    );
+    if (!clientSupportsDefinitionLinks) return locations;
+    // The origin range makes the editor underline and click the whole
+    // `[[...]]` rather than the word under the cursor, which markdown's word
+    // pattern cuts at every `/`.
+    return locations.map(({ range, uri }) => ({
+      originSelectionRange: context.link.range,
+      targetRange: range,
+      targetSelectionRange: range,
+      targetUri: uri,
+    }));
   } catch (error) {
     connection.console.error(`lat-lsp: definition failed: ${String(error)}`);
     return null;

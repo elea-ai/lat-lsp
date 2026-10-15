@@ -32,7 +32,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@lat.md/core": "0.1.1",
+    "@lat.md/core": "0.1.2",
     "vscode-languageserver": "10.1.1",
     "vscode-languageserver-textdocument": "1.0.14"
   },

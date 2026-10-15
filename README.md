@@ -133,7 +133,10 @@ Five requests, all served from one in-memory index of the lattice.
   comment, jumps to the section heading. Source targets (`path/to/file.ts#Symbol`) jump to the symbol
   via the tree-sitter parser, directory targets open the directory's entry file (`README.md`,
   `package.json`, `pubspec.yaml`, `index.ts`, `main.tf`, `terragrunt.hcl`), ambiguous stems return
-  every candidate.
+  every candidate. Paths may hold dynamic route segments (`[[pages/[region]/index.astro]]`,
+  `[[pages/[[...slug]]/index.astro]]`); brackets in the target nest the way `lat check` parses them.
+  Clients that support `LocationLink` get the whole `[[...]]` as the origin range, so the hover
+  underline and the click target span the link rather than one path segment.
 - `textDocument/references` — on a section heading or on any `[[target]]`: every incoming wiki link
   plus every `@lat:` annotation, at the exact column of each link. In a source file it resolves the
   symbol under the cursor and lists the lat.md sections that document it, falling back to file-level

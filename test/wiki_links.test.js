@@ -57,6 +57,56 @@ test('ignores empty and unterminated links', () => {
   assert.deepEqual(scanWikiLinks('[[alpha\nbeta]]'), []);
 });
 
+test('ignores a link whose alias is only whitespace', () => {
+  assert.deepEqual(scanWikiLinks('[[alpha| ]]'), []);
+});
+
+test('keeps a dynamic route segment in the target', () => {
+  const links = scanWikiLinks('see [[pages/[region]/reset-password.astro]] now');
+
+  assert.equal(links.length, 1);
+  assert.equal(links[0].target, 'pages/[region]/reset-password.astro');
+  assert.deepEqual(links[0].range, {
+    end: { character: 43, line: 0 },
+    start: { character: 4, line: 0 },
+  });
+});
+
+test('keeps a catch-all segment in double brackets in the target', () => {
+  const links = scanWikiLinks('[[pages/[[...slug]]/index.astro]]');
+
+  assert.equal(links[0].target, 'pages/[[...slug]]/index.astro');
+  assert.equal(links[0].range.end.character, 33);
+});
+
+test('drops the alias of a link with a dynamic route segment', () => {
+  const links = scanWikiLinks('[[pages/[region]/a.astro|Reset page]]');
+
+  assert.equal(links[0].target, 'pages/[region]/a.astro');
+  assert.equal(links[0].range.end.character, 37);
+});
+
+test('scans two bracketed links on one line with their own ranges', () => {
+  const links = scanWikiLinks('[[a/[x]/b.astro]] and [[c/[[...y]]/d.astro#Z]]');
+
+  assert.deepEqual(
+    links.map((link) => [
+      link.target,
+      link.range.start.character,
+      link.range.end.character,
+    ]),
+    [
+      ['a/[x]/b.astro', 0, 17],
+      ['c/[[...y]]/d.astro#Z', 22, 46],
+    ],
+  );
+});
+
+test('ignores a link whose brackets never close outside a segment', () => {
+  assert.deepEqual(scanWikiLinks('[[pages/[region/a.astro]]'), []);
+  assert.deepEqual(scanWikiLinks('[[pages/[region]\n/a.astro]]'), []);
+});
+
 test('stripAlias trims surrounding whitespace', () => {
   assert.equal(stripAlias(' alpha | Alpha '), 'alpha');
 });
@@ -107,4 +157,8 @@ test('linkAtPosition resolves the shared boundary to the right link', () => {
 test('wikiLinkColumn points at the opening brackets', () => {
   assert.equal(wikiLinkColumn('  // see [[alpha#Beta]]', 'alpha#Beta'), 9);
   assert.equal(wikiLinkColumn('no link here', 'alpha'), 0);
+  assert.equal(
+    wikiLinkColumn('// @lat: [[pages/[region]/a.astro]]', 'pages/[region]/a.astro'),
+    9,
+  );
 });
